@@ -13,14 +13,14 @@ Preparing
 
 ### Dependencies
 LATTE could be obtained from github (https://github.com/PengjuZ/LATTE). Then download the required softwares as following, and add them to the `PATH` variable. After that, recalling by absolute path. 
-* Required for TE quantification:
-        * samtools == 1.17
-        * bedtools == 2.31.1
-* Optional for anomalous ERV detection:
-        * python == 3.11
-        * numpy == 2.1.40
-        * pandas == 2.2.2
-        * scikit-learn == 1.5.1
+* Required for TE quantification
+  * samtools == 1.17
+  * bedtools == 2.31.1
+* Optional for anomalous ERV detection
+  * python == 3.11
+  * numpy == 2.1.40
+  * pandas == 2.2.2
+  * scikit-learn == 1.5.1
 
 ### Test files
 Two files `examples/test.bam` & `examples/testTE.gff` are provided within LATTE for testing its operation. Once LATTE and its dependences are in your `PATH` variable, you can execute it as follows. Normally, this process takes in seconds. By default, a output file `test.bam_TE` would be generated in the current directory. 
