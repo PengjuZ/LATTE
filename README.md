@@ -3,28 +3,24 @@
 ```sh
 LATTE -b <sorted.BAM> -g <TE.gff> 
 ```
-# Table of Contents
-[toc]
 
 # Users' Guide
 LATTE is a pipeline to quantify locus-specific expression of transposable elements (TEs) in short read RNA-seq. LATTE is **implemented in Bash only till now, and requires no installation**. However, other softwares that are part of the pipeline are required. Users could choose the available way to install.
 
 ## Installation
-### Anaconda
-LATTE is available on conda and can be installed using conda. 
-```sh
-conda install jiaqiang_987::LATTE
-```
+### Bioconda
+Preparing
 
 ### Dependencies
-If conda does not successfully install, LATTE could be obtained from github (https://github.com/PengjuZ/LATTE). Then download the required softwares as following, and add them to the `PATH` variable. After that, recalling by absolute path. 
-* Glibc == 2.17
-* samtools == 1.17
-* bedtools == 2.31.1
-* python == 3.11
-* numpy == 2.1.40
-* pandas == 2.2.2
-* scikit-learn == 1.5.1
+LATTE could be obtained from github (https://github.com/PengjuZ/LATTE). Then download the required softwares as following, and add them to the `PATH` variable. After that, recalling by absolute path. 
+* Required for TE quantification:
+        * samtools == 1.17
+        * bedtools == 2.31.1
+* Optional for anomalous ERV detection:
+        * python == 3.11
+        * numpy == 2.1.40
+        * pandas == 2.2.2
+        * scikit-learn == 1.5.1
 
 ### Test files
 Two files `examples/test.bam` & `examples/testTE.gff` are provided within LATTE for testing its operation. Once LATTE and its dependences are in your `PATH` variable, you can execute it as follows. Normally, this process takes in seconds. By default, a output file `test.bam_TE` would be generated in the current directory. 
