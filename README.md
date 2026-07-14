@@ -40,7 +40,7 @@ find . -type f \( -name "LATTE" -o -name "*.sh" -o -name "*.py" \) -exec chmod +
 export PATH="$PWD/bin/:$PATH"
 
 # 2. Install dependencies
-# Recomend build a new conda environment for LATTE
+# Recommend build a new conda environment for LATTE
 conda create -n LATTE
 # Activate the conda environment for LATTE
 conda activate LATTE
