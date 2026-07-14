@@ -4,8 +4,9 @@ LATTE is a pipeline to **quantify locus-specific expression of transposable elem
 # Getting Started
 ```sh
 # Quantify TE expression in a sorted BAM file
-LATTE -b <sorted.BAM> -g <TE.gff.by.RepeatMasker> 
-# Quantify TE expression through a list of BAM files (generating TPM and ReadCount table)
+LATTE -b <sorted.BAM> -g <TE.gff.by.RepeatMasker>
+
+# Or quantify TE expression through a list of BAM files (generating TPM and ReadCount table)
 LATTE -l <list.of.BAM.files> -g <TE.gff.by.RepeatMasker> 
 ```
 [Important considerations](./README.md.md#general-usage):
@@ -31,9 +32,12 @@ LATTE could be obtained from github (https://github.com/PengjuZ/LATTE). Then dow
 ```sh
 # 1. Clone the repository
 git clone https://github.com/PengjuZ/LATTE.git
-cd LATTE                        # Change to the LATTE directory
-find . -type f \( -name "LATTE" -o -name "*.sh" -o -name "*.py" \) -exec chmod +x {} \;  # Make LATTE executable
-export PATH="$PWD/bin/:$PATH"   # Add LATTE to PATH
+# Change to the LATTE directory
+cd LATTE
+# Make LATTE and its scripts executable
+find . -type f \( -name "LATTE" -o -name "*.sh" -o -name "*.py" \) -exec chmod +x {} \;
+# Add LATTE to PATH (temporary)
+export PATH="$PWD/bin/:$PATH"
 
 # 2. Install dependencies
 # Recomend build a new conda environment for LATTE
