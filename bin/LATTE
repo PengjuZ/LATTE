@@ -1,0 +1,161 @@
+#!/bin/bash
+
+#
+bam_file=""
+list_bam_files=""
+te_gff=""
+output_prefix=""
+thread=1
+overlap=0.5
+expectation=0.8
+max_iterations_outer=10
+max_iterations_inner=10
+abe_step="False"
+# script_dir=$(cd $(dirname $0);pwd)
+# development 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; # echo $SCRIPT_DIR
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+reserve_tmp_dir="False"
+
+# parameter
+usage() {
+        echo "Usage: $0" 
+        echo "      -b  <BAM file (sorted)>" 
+        echo "      -l  <List of BAM files (absolute path required, one per line, no space), restricted by -b>" 
+        echo "      -g  <TE annotation file (format as RepeatMasker.GFF)>"
+        echo "      -o  <Output prefix> (default: working directory)"
+        echo "      -t  <Multiple threads for List of BAM files, restricted by -b> (default: 1)"
+        echo "      -f  <Minimum overlap requirement> (default: 0.5)"
+        echo "      -p  <Maximum likelihood value for assignment> (default: 0.8)"
+        echo "      -m  <Maximum iterations of the outer cycle> (default: 10)"
+        echo "      -M  <Maximum iterations of the inner cycle> (default: 10)"  
+        echo "      -e  <Abnormal ERV detection> (default: Flase)"
+        echo "      -v  <Show version information>"
+        echo "      -h  <Show this help message>"   
+        exit 0
+}
+
+# getopts
+while getopts ":b:l:g:o:t:f:m:M:p:ezvh" opt; do
+    case $opt in
+        b)
+            bam_file="$OPTARG"
+            ;;
+        l)
+            list_bam_files="$OPTARG"
+            ;;        
+        g)
+            te_gff="$OPTARG"
+            ;;
+        o)
+            output_prefix="$OPTARG"
+            ;;
+        t)
+            thread="$OPTARG"
+            ;;
+        f)
+            overlap="$OPTARG"
+            ;;
+        p)
+            expectation="$OPTARG"
+            ;;
+        e)
+            abe_step="True"
+            ;;
+        m)
+            max_iterations_outer="$OPTARG"
+            ;;
+        M)
+            max_iterations_inner="$OPTARG"
+            ;;
+        z)
+            reserve_tmp_dir="True"
+            ;;
+        v) echo "Version 1.0.8" && exit 0 ;;
+        h) usage ;;
+        :)
+            echo "The option -$OPTARG requires a parameter."
+            usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+# 
+shift $((OPTIND - 1))
+# checking the necessary parameters
+if [[ ! -z "$bam_file" ]] && [[ ! -z "$list_bam_files" ]]; then
+    echo "Error: both <-b> and <-l> are provided, please choose one"    
+    usage
+elif [[ -z "$te_gff" ]] && { [[ -z "$bam_file" ]] || [[ -z "$list_bam_files" ]]; }; then
+    echo "Error: <-g> is required, and either <-b> or <-l> must be provided"
+    usage
+elif [[ ! -e "$te_gff" ]] && { [[ ! -e "$bam_file" ]] || [[ -e "$list_bam_files" ]]; }; then
+    echo "Error： no such <BAM file> or <List of BAM files> or <TE annotation file>"
+    usage
+fi
+
+# convert to absolute path (in case)
+[[ -f "$bam_file" ]] && absPathBamFile=$(readlink -f "$bam_file") && bam_file=$absPathBamFile
+[[ -f "$te_gff" ]] && absPathTeGff=$(readlink -f "$te_gff") && te_gff=$absPathTeGff
+[[ -f "$list_bam_files" ]] && absPathListBamFiles=$(readlink -f "$list_bam_files") && list_bam_files=$absPathListBamFiles
+# convert each line in list_bam_files to absolute path
+[[ ! -z $list_bam_files ]] && abs_paths_str=""    
+[[ ! -z $list_bam_files ]] && while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    abs_path="$(readlink -f "$line")"
+    if [[ -z "$abs_paths_str" ]]; then
+        abs_paths_str="$abs_path"
+    else
+        abs_paths_str="${abs_paths_str}\n${abs_path}"
+    fi
+done < "$list_bam_files"
+
+# check output prefix
+if [[ -z ${output_prefix} ]] && [[ ! -z ${bam_file} ]]; then
+    # default output prefix: working directory + BAM file name
+    output_prefix=$(pwd | sed "s/$/\/$(basename $bam_file)&/g")
+elif [[ -z ${output_prefix} ]] && [[ ! -z ${list_bam_files} ]]; then
+    # default output prefix: working directory
+    output_prefix=$(pwd | sed "s/$/\//")
+elif [[ ! -z ${output_prefix} ]] && [[ ! -z ${bam_file} ]]; then
+    # output directory check
+    absPathOutput=$(dirname ${output_prefix})
+    if [ ! -d "$absPathOutput" ] ; then
+        echo "Error: no such <output directory>"
+        usage
+    fi
+    absPathPrefix=$(readlink -f "$output_prefix")
+    if [ ${absPathPrefix} == $(pwd) ] ; then
+        output_prefix=$(pwd | sed "s/$/\/$(basename $bam_file)&/g")
+    else
+        output_prefix=$absPathPrefix
+    fi
+elif [[ ! -z ${output_prefix} ]] && [[ ! -z ${list_bam_files} ]]; then
+    # output directory check
+    absPathOutput=$(dirname ${output_prefix})
+    if [ ! -d "$absPathOutput" ] ; then
+        echo "Error: no such <output directory>"
+        usage
+    fi
+    absPathPrefix=$(readlink -f "$output_prefix")
+    if [ ${absPathPrefix} == $(pwd) ] ; then
+        output_prefix=$(pwd | sed "s/$/\//")
+    else
+        output_prefix=$absPathPrefix
+    fi
+else
+    echo "Error: <output prefix> is not valid"
+    usage
+fi
+
+# print the parameters
+# echo "Parameters: "
+# echo ${bam_file} ${list_bam_files} ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir} | awk '{for(i=1;i<=NF;i++) printf "\t%s\n", $i}'
+
+# execute
+[[ ! -z ${bam_file} ]] && echo "BaseMode" && bash ${PARENT_DIR}/scripts/base_mode.sh ${bam_file} "NA" ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir}
+[[ ! -z ${list_bam_files} ]] && echo "BatchMode" && bash ${PARENT_DIR}/scripts/batch_mode.sh "NA" ${abs_paths_str} ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir}
+
