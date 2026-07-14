@@ -58,6 +58,7 @@ bedtools --version
 # Test files
 Three files `test/test.bam` & `test/test_List_of_BamFiles` & `test/testTE.gff` are provided within LATTE for testing its operation. Once LATTE and its dependences are in your `PATH` variable, you can execute it as follows. Normally, this process takes in seconds. By default, output files would be generated in the current directory.
 ```sh
+cd /path/to/LATTE
 # Quantify TE expression in a single BAM file
 LATTE -b test/test.bam -g test/testTE.gff
 # Quantify TE expression in a list of BAM files
