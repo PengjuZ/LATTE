@@ -34,14 +34,18 @@ git clone https://github.com/PengjuZ/LATTE.git
 cd LATTE                        # Change to the LATTE directory
 find . -type f \( -name "LATTE" -o -name "*.sh" -o -name "*.py" \) -exec chmod +x {} \;  # Make LATTE executable
 export PATH="$PWD/bin/:$PATH"   # Add LATTE to PATH
+
 # 2. Install dependencies
-conda create -n LATTE           # Recomend build a new conda environment for LATTE
-conda activate LATTE            # Activate the conda environment for LATTE
+# Recomend build a new conda environment for LATTE
+conda create -n LATTE
+# Activate the conda environment for LATTE
+conda activate LATTE
 # Required for TE quantification
 conda install -c bioconda samtools==1.24 bedtools==2.31.1
 # Optional for anomalous ERV detection
-conda install -c conda-forge python==3.14 numpy==2.5.1 pandas==2.0.3 scikit-learn==1.9.0  
-# 3. Check the version of LATTE and dependencies
+conda install -c conda-forge python==3.14 numpy==2.5.1 pandas==2.0.3 scikit-learn==1.9.0
+
+# 3. Check the installation of LATTE and dependencies
 LATTE -v
 samtools --version
 bedtools --version
