@@ -83,8 +83,7 @@ Important considerations:
     test/test_2.bam
     test/test_3.bam
     ```
-* `-g` Notably, our testing has been conducted solely with the <b>GFF file from [RepeatMasker</b>](https://www.repeatmasker.org/). 
-    * We recommend to use the following parameters to generate the GFF annotation file:
+* `-g` Notably, our testing has been conducted solely with the <b>GFF file from [RepeatMasker</b>](https://www.repeatmasker.org/). Recommend use the following parameters to generate the GFF annotation file:
     ```sh
     RepeatMasker -pa ${process_num} -species ${species} -no_is -nolow -norna -poly -html -gff -dir ${output_dir}
     ```
