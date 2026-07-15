@@ -97,21 +97,103 @@ elif [[ ! -e "$te_gff" ]] && { [[ ! -e "$bam_file" ]] || [[ -e "$list_bam_files"
     usage
 fi
 
-# convert to absolute path (in case)
-[[ -f "$bam_file" ]] && absPathBamFile=$(readlink -f "$bam_file") && bam_file=$absPathBamFile
-[[ -f "$te_gff" ]] && absPathTeGff=$(readlink -f "$te_gff") && te_gff=$absPathTeGff
-[[ -f "$list_bam_files" ]] && absPathListBamFiles=$(readlink -f "$list_bam_files") && list_bam_files=$absPathListBamFiles
+# check the required tools
+if [[ ! $(samtools --version) ]] && [[ ! $(bedtools --version) ]]; then
+    echo "Error: samtools and bedtools are not in PATH"
+    exit 0
+elif [[ ! $(samtools --version) ]]; then
+    echo "Error: samtools is not in PATH"
+    exit 0
+elif [[ ! $(bedtools --version) ]]; then
+    echo "Error: bedtools is not in PATH"
+    exit 0
+fi
+
+# check file exist and convert to absolute path (in case)
+[[ ! -z ${bam_file} ]] && if [[ -f "$bam_file" ]]; then
+    absPathBamFile=$(readlink -f "$bam_file")
+    bam_file=$absPathBamFile
+else
+    echo "Error: <BAM file: ${bam_file} > is not exist"
+    exit 0
+fi
+[[ ! -z $list_bam_files ]] && if [[ -f "$list_bam_files" ]]; then
+    absPathListBamFiles=$(readlink -f "$list_bam_files")
+    list_bam_files=$absPathListBamFiles
+else
+    echo "Error: <List of BAM files: ${list_bam_files} > is not exist"
+    exit 0
+fi
+if [[ -f "$te_gff" ]]; then
+    absPathTeGff=$(readlink -f "$te_gff")
+    te_gff=$absPathTeGff
+else
+    echo "Error: <TE annotation file: ${te_gff} > is not exist"
+    exit 0
+fi
+
+
 # convert each line in list_bam_files to absolute path
-[[ ! -z $list_bam_files ]] && abs_paths_str=""    
+[[ ! -z $list_bam_files ]] && abs_paths_str=""
+[[ ! -z $list_bam_files ]] && [[ -f ${output_prefix}_tmp_LATTE_BAMAbsPath ]] && rm ${output_prefix}_tmp_LATTE_BAMAbsPath
 [[ ! -z $list_bam_files ]] && while IFS= read -r line; do
     [[ -z "$line" ]] && continue
     abs_path="$(readlink -f "$line")"
-    if [[ -z "$abs_paths_str" ]]; then
-        abs_paths_str="$abs_path"
-    else
-        abs_paths_str="${abs_paths_str}\n${abs_path}"
+    # if the BamFile in list is not exist, continue
+    if [[ ! -f ${abs_path} ]]; then
+        echo "[file not exist; continue] ${line}"
+        continue
     fi
+    echo ${abs_path} >> ${output_prefix}_tmp_LATTE_BAMAbsPath
+    # if [[ -z "$abs_paths_str" ]]; then
+    #     abs_paths_str="$abs_path"
+    # else
+    #     abs_paths_str="${abs_paths_str}\n${abs_path}"
+    # fi
 done < "$list_bam_files"
+
+# check the validity of the list of BAM files (by size)
+[[ ! -z $list_bam_files ]] && if [[ ! -s ${output_prefix}_tmp_LATTE_BAMAbsPath ]]; then
+    echo "Error: no valid <absolute paths of BAM files> in <List of BAM files>, please check"
+    exit 0
+fi
+
+# check repeat names in list of BAM files  
+if [[ ! -z $list_bam_files ]] && [[ -f ${output_prefix}_tmp_LATTE_BAMAbsPath ]]; then
+    awk -F'/' '{count[$NF]++} END {for (name in count) {if (count[name] > 1) print "Error: repeat name in <list of BAM files> " name }}' ${output_prefix}_tmp_LATTE_BAMAbsPath
+    if ! awk -F'/' '{count[$NF]++} END {for (name in count) {if (count[name] > 1) exit 1}}' ${output_prefix}_tmp_LATTE_BAMAbsPath; then
+        echo "Error: no repeat names allowed in <list of BAM files>"
+        exit 0
+    fi
+fi
+
+# check the GFF format
+if ! awk -v FS="\t" '
+(NR == 1) || (/#/) { next }
+{
+    if ( ($4 !~ /^[0-9]+([.][0-9]+)?$/) || ($5 !~ /^[0-9]+([.][0-9]+)?$/) ) {
+        exit 1
+    }
+    num = split($9, arr, " ")
+    if (num != 4) {
+        exit 1
+    }
+}' "${te_gff}"; then
+    echo "Error: invalid format of <TE.gff>, please check"
+    exit 0
+elif awk -v FS="\t" '
+(NR == 1) || (/#/) { next }
+{
+    if ($9 ~ /rich|\)n/) {
+        exit 0
+    }
+}' "${te_gff}"; then
+    echo "Warning: low-complexity sequence in the <TE.gff> file, recommend to remove"
+fi
+
+# # check the chromosome match between BAM and GFF 
+# [[ ! -z $bam_file ]] && bam_for_check=$bam_file
+# [[ ! -z $list_bam_files ]] && bam_for_check=$(head -n1 ${output_prefix}_tmp_LATTE_BAMAbsPath)
 
 # check output prefix
 if [[ -z ${output_prefix} ]] && [[ ! -z ${bam_file} ]]; then
@@ -151,11 +233,11 @@ else
     usage
 fi
 
-# print the parameters
-# echo "Parameters: "
+# # print the parameters
+# echo "[Parameters:]"
 # echo ${bam_file} ${list_bam_files} ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir} | awk '{for(i=1;i<=NF;i++) printf "\t%s\n", $i}'
 
 # execute
-[[ ! -z ${bam_file} ]] && echo "BaseMode" && bash ${PARENT_DIR}/scripts/base_mode.sh ${bam_file} "NA" ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir}
-[[ ! -z ${list_bam_files} ]] && echo "BatchMode" && bash ${PARENT_DIR}/scripts/batch_mode.sh "NA" ${abs_paths_str} ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir}
+[[ ! -z ${bam_file} ]] && echo "[BaseMode]" && bash ${PARENT_DIR}/scripts/base_mode.sh ${bam_file} "NA" ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir}
+[[ ! -z ${list_bam_files} ]] && echo "[BatchMode]" && bash ${PARENT_DIR}/scripts/batch_mode.sh "NA" ${output_prefix}_tmp_LATTE_BAMAbsPath ${te_gff} ${output_prefix} ${thread} ${overlap} ${expectation} ${max_iterations_outer} ${max_iterations_inner} ${abe_step} ${SCRIPT_DIR} ${PARENT_DIR} ${reserve_tmp_dir} && rm ${output_prefix}_tmp_LATTE_BAMAbsPath
 
