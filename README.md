@@ -116,7 +116,7 @@ Important considerations:
           -h  <Show this help message>
     ```
 
-# standard output files
+# Output files
 1.  standard output files with parameters `-b`:
 ```
 ==> ${output_prefix}${bam_file_name}_LATTE_TE_Expression <==
