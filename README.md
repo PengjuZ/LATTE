@@ -150,7 +150,7 @@ TE      Count   TPM
 # Advanced features
 ### 1. Cleaning the TE annotation file (gff)
 In order to clean the silent TEs. A TE database is constructed from the long reads of RNA-seq in several domestic animals. Based on this database, types of silent TE from GFF file would be discarded. Then returning another GFF file for quantification. 
-Presently, this function `GFFfilter.sh` is limited to a selection of domestic animals, **specifically pigs, cattle, sheep, goats, and chickens**. For the other species, users could customize the TE annotation file to adjust the active TE subfamilies.
+Presently, this function `filterGFF.sh` is limited to a selection of domestic animals, **specifically pigs, cattle, sheep, goats, and chickens**. For the other species, users could customize the TE annotation file to adjust the active TE subfamilies.
 ```sh
 scripts/filterGFF.sh -s <species> -g <TE.gff>
 ```
