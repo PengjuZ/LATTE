@@ -129,6 +129,32 @@ TE      Count   TPM
 1|18907|19048|L2a|2942|3104|-   1|18957|19083   ReadId_8412199/2
 1|19972|20405|L3|2680|3129|+    1|19978|20101   ReadId_6298807/1
 ```
+
+> **TE ID format**  
+> The first column, `TE`, is a pipe-separated identifier with the following fields:
+>
+> ```text
+> chromosome|genomic_start|genomic_end|TE_family|TE_relative_start|TE_relative_end|strand
+> ```
+>
+> Example:
+>
+> ```text
+> 1|18907|19048|L2a|2942|3104|+
+> ```
+>
+> | Field | Example | Meaning |
+> | --- | --- | --- |
+> | Chromosome | `1` | Reference sequence or chromosome name |
+> | Genomic start | `18907` | Start position of the TE on the reference genome |
+> | Genomic end | `19048` | End position of the TE on the reference genome |
+> | TE family | `L2a` | TE family or subfamily name |
+> | TE relative start | `2942` | Start position of the TE on its consensus/reference repeat sequence |
+> | TE relative end | `3104` | End position of the TE on its consensus/reference repeat sequence |
+> | Strand | `+` | Strand direction: `+` for plus strand, `-` for minus strand |
+>
+> Therefore, `1|18907|19048|L2a|2942|3104|+` means a TE locus on chromosome `1` from `18907` to `19048`, belonging to the `L2a` family, corresponding to positions `2942–3104` on the TE consensus sequence, and located on the plus strand. This TE ID is used as the row name in `_LATTE_ReadCount`, `_LATTE_TPM`, and related output tables, allowing the same TE locus to be identified across samples. Coordinates are 1-based, following the RepeatMasker GFF format.
+
 2.  standard output files with parameters `-l` (for TE-eQTL mapping):
 ```
 ==> ${output_prefix}_LATTE_ReadCount <==
@@ -179,5 +205,3 @@ LATTE -b <bam> -g <TE.gff> -o <output> -f 1
 
 ## Citing 
 (https://www.biorxiv.org/content/10.64898/2026.03.28.714964v1)
-
-
