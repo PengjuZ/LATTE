@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#
+# 261015 exit code 
 bam_file=""
 list_bam_files=""
 te_gff=""
